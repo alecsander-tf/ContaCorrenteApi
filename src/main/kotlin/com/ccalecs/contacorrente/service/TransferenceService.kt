@@ -9,6 +9,7 @@ import com.ccalecs.contacorrente.response.TransferenceResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.IllegalStateException
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
 
@@ -32,10 +33,40 @@ class TransferenceService @Autowired constructor(
         }
     }
 
-    fun transfer(clientIdSender: Long, clientIdReceiver: Long, value: Double): StatusResponse {
+    fun transfer(clientIdSender: Long, clientEmail: String, stringValue: String): StatusResponse {
+
+        val optionalClientSender = clientRepository.findClientByClientId(clientIdSender)
+        val optionalClientReceiver = clientRepository.findClientByEmail(clientEmail)
+
+        val value = BigDecimal(stringValue)
+
+        validateTransfer(optionalClientSender, optionalClientReceiver, value)
+
+        val clientSender = optionalClientSender.get().apply {
+            balance -= value
+            clientRepository.save(this)
+        }
+
+        val clientReceiver = optionalClientReceiver.get().apply {
+            balance += value
+            clientRepository.save(this)
+        }
+
+        transferenceRepository.save(
+            Transference(
+                clientSender, clientReceiver, value, LocalDate.now()
+            )
+        )
+
+        return StatusResponse(true, "")
+    }
+
+    fun transfer(clientIdSender: Long, clientIdReceiver: Long, stringValue: String): StatusResponse {
 
         val optionalClientSender = clientRepository.findClientByClientId(clientIdSender)
         val optionalClientReceiver = clientRepository.findClientByClientId(clientIdReceiver)
+
+        val value = BigDecimal(stringValue)
 
         validateTransfer(optionalClientSender, optionalClientReceiver, value)
 
@@ -61,20 +92,23 @@ class TransferenceService @Autowired constructor(
     private fun validateTransfer(
         optionalClientSender: Optional<Client>,
         optionalClientReceiver: Optional<Client>,
-        value: Double
+        value: BigDecimal
     ) {
 
-        if (value <= 0) throw IllegalArgumentException("Value must not be zero or negative")
+        if (value <= BigDecimal(0)) throw IllegalArgumentException("Value must not be zero or negative")
 
-        optionalClientSender.orElseThrow {
+        val clientReceiver = optionalClientReceiver.orElseThrow {
+            throw IllegalStateException("Client receiver email does not exist")
+        }
+
+        val clientSender = optionalClientSender.orElseThrow {
             throw IllegalStateException("Client sender id does not exist")
-        }.run {
-            if (value > balance) throw IllegalStateException("Client does not have balance to make transfer")
         }
 
-        optionalClientReceiver.orElseThrow {
-            throw IllegalStateException("Client receiver id does not exist")
-        }
+        if (clientSender.clientId == clientReceiver.clientId) throw IllegalStateException("Client receiver cannot be the same as client sender")
+        if (value > clientSender.balance) throw IllegalStateException("Client does not have balance to make transfer")
+
+
     }
 
 }

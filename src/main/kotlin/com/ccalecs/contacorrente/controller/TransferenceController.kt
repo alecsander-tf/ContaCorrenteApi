@@ -14,10 +14,17 @@ class TransferenceController @Autowired constructor(val transferenceService: Tra
         return transferenceService.findTransferenceListByClientId(clientId)
     }
 
-    @PostMapping(path = ["transfer"])
+    @PostMapping(path = ["transfer-by-id"])
     fun transfer(
-        @RequestParam clientIdSender: Long, @RequestParam clientIdReceiver: Long, @RequestParam value: Double
+        @RequestParam clientIdSender: Long, @RequestParam clientIdReceiver: Long, @RequestParam value: String
     ): StatusResponse {
         return transferenceService.transfer(clientIdSender, clientIdReceiver, value)
+    }
+
+    @PostMapping(path = ["transfer-by-email"])
+    fun transfer(
+        @RequestParam clientIdSender: Long, @RequestParam clientEmailReceiver: String, @RequestParam value: String
+    ): StatusResponse {
+        return transferenceService.transfer(clientIdSender, clientEmailReceiver, value)
     }
 }

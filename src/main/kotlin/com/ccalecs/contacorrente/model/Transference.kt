@@ -1,6 +1,7 @@
 package com.ccalecs.contacorrente.model
 
 import jakarta.persistence.*
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Entity
@@ -14,7 +15,7 @@ data class Transference(
     @JoinColumn(name = "clientIdReceiver", referencedColumnName = "clientId")
     val clientReceiver: Client,
 
-    val value: Double, val data: LocalDate
+    val value: BigDecimal, val data: LocalDate
 ) {
 
     @Id

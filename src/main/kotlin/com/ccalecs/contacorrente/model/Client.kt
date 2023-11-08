@@ -1,12 +1,13 @@
 package com.ccalecs.contacorrente.model
 
 import jakarta.persistence.*
+import java.math.BigDecimal
 
 @Entity
 @Table
 data class Client(
     val name: String,
-    var balance: Double,
+    var balance: BigDecimal,
     val email: String,
     val password: String
 ) {
