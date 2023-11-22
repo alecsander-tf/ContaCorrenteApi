@@ -1,16 +1,12 @@
 package com.ccalecs.contacorrente.service
 
+import com.ccalecs.contacorrente.exception.ClientNotFoundException
 import com.ccalecs.contacorrente.model.Client
 import com.ccalecs.contacorrente.repository.ClientRepository
 import com.ccalecs.contacorrente.response.StatusResponse
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.server.ResponseStatusException
-import java.io.IOException
-import java.lang.IllegalStateException
-import kotlin.jvm.optionals.getOrElse
 
 @Service
 class ClientService @Autowired constructor(val clientRepository: ClientRepository) {
@@ -20,21 +16,23 @@ class ClientService @Autowired constructor(val clientRepository: ClientRepositor
 
     @GetMapping
     fun getClientByEmail(email: String): Client = clientRepository.findClientByEmail(email).orElseThrow {
-        ResponseStatusException(HttpStatus.NOT_FOUND, "Client does not exist")
+        ClientNotFoundException(message = "Client with email $email was not found")
     }
 
     @GetMapping
     fun getClientById(id: Long): Client = clientRepository.findClientByClientId(id).orElseThrow {
-        ResponseStatusException(HttpStatus.NOT_FOUND, "Client does not exist")
+        ClientNotFoundException(message = "Client with id $id was not found")
     }
 
     fun login(email: String, password: String): StatusResponse {
 
+        val clientNotFoundException = ClientNotFoundException(message = "Invalid Email or password")
+
         val client = clientRepository.findClientByEmail(email).orElseThrow {
-            throw IllegalStateException("Invalid Email or Password")
+            clientNotFoundException
         }
 
-        if (client.password != password) throw IllegalStateException("Invalid Email or Password")
+        if (client.password != password) throw clientNotFoundException
 
         return StatusResponse(true, "")
     }
